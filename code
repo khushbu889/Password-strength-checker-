@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Password Strength Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #fef08a, #f59e0b);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .strength-meter {
+            height: 6px;
+            border-radius: 3px;
+            background-color: rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .strength-meter-fill {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .password-container {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #713f12;
+            transition: all 0.2s;
+        }
+        
+        .toggle-password:hover {
+            color: #431407;
+        }
+        
+        .warning-box {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden border-2 border-amber-200">
+        <div class="p-8">
+            <div class="text-center mb-8">
+                <div class="mx-auto mb-6 w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center shadow-inner border-2 border-amber-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-amber-800">Password Strength</h1>
+                <p class="text-amber-600 mt-2">Check how secure your password is</p>
+            </div>
+            
+            <div class="mb-6">
+                <div class="password-container">
+                    <input 
+                        type="password" 
+                        id="passwordInput" 
+                        placeholder="Enter your password"
+                        class="w-full px-4 py-3 border-2 border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-amber-50 text-amber-900 placeholder-amber-400"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                    >
+                    <button id="togglePassword" class="toggle-password" aria-label="Toggle password visibility">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="strengthMeter" class="strength-meter mt-3">
+                    <div id="strengthMeterFill" class="strength-meter-fill"></div>
+                </div>
+                
+                <div id="strengthText" class="text-sm font-medium mt-2 text-amber-800">
+                    Enter a password to check its strength
+                </div>
+                
+                <div id="warningBox" class="warning-box hidden mt-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+                    <div class="flex items-start">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <strong class="font-bold" id="warningTitle">Warning! </strong>
+                            <span id="warningMessage">Your password is very weak and easily guessable.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                <h2 class="font-semibold text-amber-800 mb-3 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m-6.84 5.535c1.292-1.292 1.737-3.166 1.335-4.85m6.01 6.01c1.292 1.292 3.166 1.737 4.85 1.335m-12.19-6.01c-1.292 1.292-1.737 3.166-1.335 4.85m-6.01 6.01c-1.292-1.292-3.166-1.737-4.85-1.335" />
+                    </svg>
+                    Password Requirements
+                </h2>
+                <ul id="requirementsList" class="space-y-2">
+                    <li class="flex items-start text-amber-900">
+                        <span id="reqLength" class="text-red-500 mr-2">✗</span>
+                        <span>At least 12 characters</span>
+                    </li>
+                    <li class="flex items-start text-amber-900">
+                        <span id="reqLowercase" class="text-red-500 mr-2">✗</span>
+                        <span>Contains lowercase letters</span>
+                    </li>
+                    <li class="flex items-start text-amber-900">
+                        <span id="reqUppercase" class="text-red-500 mr-2">✗</span>
+                        <span>Contains uppercase letters</span>
+                    </li>
+                    <li class="flex items-start text-amber-900">
+                        <span id="reqNumber" class="text-red-500 mr-2">✗</span>
+                        <span>Contains numbers</span>
+                    </li>
+                    <li class="flex items-start text-amber-900">
+                        <span id="reqSpecial" class="text-red-500 mr-2">✗</span>
+                        <span>Contains special characters</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div id="suggestions" class="mt-6 hidden">
+                <h3 class="font-semibold text-amber-800 mb-2">Suggestions to improve:</h3>
+                <ul id="suggestionsList" class="text-sm text-amber-700 space-y-1"></ul>
+            </div>
+        </div>
+        
+        <div class="bg-amber-900 text-amber-100 p-4 text-center text-sm">
+            <p>💡 Security tip: Avoid using personal information in passwords.</p>
+        </div>
+    </div>
+
+    <script>
+        const passwordInput = document.getElementById('passwordInput');
+        const strengthMeterFill = document.getElementById('strengthMeterFill');
+        const strengthText = document.getElementById('strengthText');
+        const togglePassword = document.getElementById('togglePassword');
+        const warningBox = document.getElementById('warningBox');
+        const warningTitle = document.getElementById('warningTitle');
+        const warningMessage = document.getElementById('warningMessage');
+        const suggestions = document.getElementById('suggestions');
+        const suggestionsList = document.getElementById('suggestionsList');
+        
+        let isVisible = false;
+        
+        passwordInput.addEventListener('input', updatePasswordStrength);
+        togglePassword.addEventListener('click', togglePasswordVisibility);
+        
+        function updatePasswordStrength() {
+            const password = passwordInput.value;
+            const { score, color, text, checks, suggestions } = calculatePasswordStrength(password);
+            
+            updateStrengthMeter(score, color);
+            updateStrengthText(text, color);
+            updateRequirementsList(checks);
+            updateWarningBox(score, text);
+            updateSuggestions(suggestions);
+        }
+        
+        function calculatePasswordStrength(password) {
+            let score = 0;
+            const suggestions = [];
+            const checks = {
+                length: false,
+                lowercase: false,
+                uppercase: false,
+                number: false,
+                special: false
+            };
+            
+            // Requirement checks
+            checks.length = password.length >= 12;
+            checks.lowercase = /[a-z]/.test(password);
+            checks.uppercase = /[A-Z]/.test(password);
+            checks.number = /\d/.test(password);
+            checks.special = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+            
+            // Calculate score
+            if (checks.length) score += 25;
+            if (checks.lowercase) score += 15;
+            if (checks.uppercase) score += 15;
+            if (checks.number) score += 15;
+            if (checks.special) score += 15;
+            
+            // Adjust score based on length
+            const lengthBonus = Math.min(15, Math.floor((password.length - 8) * 1.5));
+            score += lengthBonus;
+            
+            // Penalize common patterns
+            if (/(password|123456|qwerty|letmein|admin)/i.test(password)) {
+                score = Math.max(10, score - 30);
+                suggestions.push("Avoid common passwords");
+            }
+            
+            if (password.length < 6) {
+                score = 0; // Too short to be considered
+            }
+            
+            // Cap score at 100%
+            score = Math.min(100, Math.max(0, score));
+            
+            // Generate suggestions
+            if (!checks.length && password.length > 0) {
+                suggestions.push("Make your password longer (at least 12 characters)");
+            }
+            if (!checks.lowercase) {
+                suggestions.push("Add lowercase letters (a-z)");
+            }
+            if (!checks.uppercase) {
+                suggestions.push("Add uppercase letters (A-Z)");
+            }
+            if (!checks.number) {
+                suggestions.push("Include numbers (0-9)");
+            }
+            if (!checks.special) {
+                suggestions.push("Add special characters (!@#$...)");
+            }
+            if (password.length > 0 && password.length < 12) {
+                suggestions.unshift("Short passwords are easier to crack");
+            }
+            if (/[^\x00-\x7F]/.test(password)) {
+                suggestions.push("Consider including non-ASCII characters for extra strength");
+            }
+            
+            // Determine color and text based on score
+            let color, text;
+            if (password.length === 0) {
+                color = 'bg-gray-400';
+                text = 'Enter a password to check its strength';
+            } else if (score < 30) {
+                color = 'bg-red-500';
+                text = 'Very Weak';
+            } else if (score < 60) {
+                color = 'bg-yellow-500';
+                text = 'Weak';
+            } else if (score < 80) {
+                color = 'bg-blue-500';
+                text = 'Good';
+            } else {
+                color = 'bg-green-500';
+                text = 'Strong!';
+            }
+            
+            return { score, color, text, checks, suggestions };
+        }
+        
+        function updateStrengthMeter(score, color) {
+            strengthMeterFill.style.width = `${score}%`;
+            strengthMeterFill.className = `strength-meter-fill ${color}`;
+        }
+        
+        function updateStrengthText(text, color) {
+            strengthText.textContent = text;
+            strengthText.className = `text-sm font-medium mt-2 ${text === 'Enter a password to check its strength' ? 'text-amber-800' : color.replace('bg', 'text')}`;
+        }
+        
+        function updateRequirementsList(checks) {
+            updateRequirement('reqLength', checks.length);
+            updateRequirement('reqLowercase', checks.lowercase);
+            updateRequirement('reqUppercase', checks.uppercase);
+            updateRequirement('reqNumber', checks.number);
+            updateRequirement('reqSpecial', checks.special);
+            
+            function updateRequirement(id, isValid) {
+                const el = document.getElementById(id);
+                el.textContent = isValid ? '✓' : '✗';
+                el.className = isValid ? 'text-green-500 mr-2' : 'text-red-500 mr-2';
+            }
+        }
+        
+        function updateWarningBox(score, strengthText) {
+            if (score < 60 && passwordInput.value.length > 0) {
+                warningBox.classList.remove('hidden');
+                
+                if (score < 30) {
+                    warningTitle.textContent = "Danger! ";
+                    warningMessage.textContent = "This password is extremely weak and can be cracked instantly.";
+                } else if (score < 60) {
+                    warningTitle.textContent = "Warning! ";
+                    warningMessage.textContent = "This password is weak and could be cracked in hours or days.";
+                }
+            } else {
+                warningBox.classList.add('hidden');
+            }
+        }
+        
+        function updateSuggestions(suggestions) {
+            if (suggestions.length > 0 && passwordInput.value.length > 0) {
+                suggestionsList.innerHTML = '';
+                suggestions.forEach(suggestion => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-baseline text-amber-800';
+                    li.innerHTML = `<span class="opacity-70 mr-2">•</span> ${suggestion}`;
+                    suggestionsList.appendChild(li);
+                });
+                suggestions.classList.remove('hidden');
+            } else {
+                suggestions.classList.add('hidden');
+            }
+        }
+        
+        function togglePasswordVisibility() {
+            isVisible = !isVisible;
+            passwordInput.type = isVisible ? 'text' : 'password';
+            
+            togglePassword.innerHTML = isVisible ?
+                `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.5-3.535m12.142.005a9.959 9.959 0 011.343 3.535M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>` :
+                `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>`;
+            
+            // Update aria-label for accessibility
+            togglePassword.setAttribute('aria-label', isVisible ? 'Hide password' : 'Show password');
+        }
+    </script>
+</body>
+</html>
