@@ -1,4 +1,4 @@
-# Golden Password Strength Checker 🔐
+#  Password Strength Checker 🔐
 
 A real-time password strength checker that gives live feedback as the user types. Built using HTML, Tailwind CSS, and JavaScript.
 
